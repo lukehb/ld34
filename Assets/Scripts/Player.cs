@@ -38,26 +38,37 @@ public class Player : KeyListener
     /// To do a double tap on a key both presses must occur within this time.
     /// </summary>
     private const float KeyDoubleTapTime = 0.3f;
+    /// <summary>
+    /// The players movement speed, increase to move faster
+    /// </summary>
+    private const float MovementSpeed = 2f;
 
     [SerializeField]
     private string _attackKey;
     [SerializeField]
     private string _dodgeKey;
+    [SerializeField]
+    private bool _inputEnabled = true;
 
     private Animator _anim;
+    private Rigidbody2D _rb;
     private int doubleTapCount = 0;
     private float doubleTapStarted;
 
 	protected override void Start ()
 	{
 	    _anim = GetComponent<Animator>();
+	    _rb = GetComponent<Rigidbody2D>();
         ListenForKey(_attackKey);
         ListenForKey(_dodgeKey);
 	}
 	
 	protected override void Update () {
-        base.Update();
-        HandleInputs();
+	    if (_inputEnabled)
+	    {
+            base.Update();
+            DetectKeyHolding();
+        }
 	}
 
     protected override void KeyPressed(string key, float holdTime)
@@ -132,15 +143,25 @@ public class Player : KeyListener
         return false;
     }
 
+    void Walk(bool right)
+    {
+
+        float newVelocity = MovementSpeed;
+        newVelocity *= (right) ? 1 : -1;
+        _rb.velocity = new Vector2(newVelocity, 0);
+    }
+
     void DoMove(Moves move)
     {
         switch (move)
         {
             case Moves.MovingForward:
                 _anim.SetBool(Anim_Bool_Walking_Forward, true);
+                Walk(true);
                 break;
             case Moves.MovingBackward:
                 _anim.SetBool(Anim_Bool_Walking_Backward, true);
+                Walk(false);
                 break;
             case Moves.Jabbing:
                 _anim.SetTrigger(Anim_Trigger_Jabbing);
@@ -158,6 +179,7 @@ public class Player : KeyListener
                 //reset everything
                 _anim.SetBool(Anim_Bool_Walking_Backward, false);
                 _anim.SetBool(Anim_Bool_Walking_Forward, false);
+                _rb.velocity = Vector2.zero;
                 break;
         }
 
@@ -193,7 +215,7 @@ public class Player : KeyListener
         }
     }
 
-    void HandleInputs()
+    void DetectKeyHolding()
     {
         //move forward
         if (KeyHeldFor(_attackKey) > KeyLongPressTime)
@@ -205,8 +227,16 @@ public class Player : KeyListener
         {
             DoMove(Moves.MovingBackward);
         }
-        
+    }
 
+    internal string GetAttackKey()
+    {
+        return _attackKey;
+    }
+
+    internal void SetInputEnabled(bool enabled)
+    {
+        this._inputEnabled = enabled;
     }
 
     
