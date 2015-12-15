@@ -16,6 +16,9 @@ public class BoxingBag : MonoBehaviour
     [SerializeField] private Coach _oldCoachMsg;
     [SerializeField] private Coach _coach;
 
+    [SerializeField]
+    private GameObject _nextDialogBtn;
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -24,7 +27,10 @@ public class BoxingBag : MonoBehaviour
 	
 	// Update is called once per frame
 	void Update () {
-	
+	    if (!_nextDialogBtn.activeInHierarchy && _coach.enabled && !_coach.CanDoMoreDialog())
+	    {
+	        _nextDialogBtn.SetActive(true);
+	    }
 	}
 
     void OnTriggerEnter2D(Collider2D other)

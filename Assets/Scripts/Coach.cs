@@ -14,7 +14,10 @@ public class Coach : MonoBehaviour
     private float _readOutCharsPerSecond = 10f;
     [SerializeField]
     private Player _player;
+    [SerializeField]
+    private float _initialDelay = 0.3f;
 
+    private float _delaySoFar = 0f;
     private bool _readTextOut = true;
     private float _timePerChar;
     private float _timeSinceLastChar = 0f;
@@ -34,30 +37,53 @@ public class Coach : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_readTextOut && !_dialog.Equals(String.Empty))
+        if (_delaySoFar < _initialDelay)
         {
-            _timeSinceLastChar += Time.deltaTime;
-            if (_timeSinceLastChar >= _timePerChar)
+            _delaySoFar += Time.deltaTime;
+        }
+        else
+        {
+            if (_readTextOut && !_dialog.Equals(String.Empty))
             {
-                if (CanDoNextChar())
+
+                //player wants to skip dialog
+                if (Input.GetKey(_player.GetAttackKey()))
                 {
-                    _charIndex++;
-                    _text.text += _dialog[_charIndex];
-                    _timeSinceLastChar = 0;
+                    while (CanDoNextChar())
+                    {
+                        _charIndex++;
+                        _text.text += _dialog[_charIndex];
+                        _timeSinceLastChar = 0;
+                    }
                 }
-                else
+
+                _timeSinceLastChar += Time.deltaTime;
+                if (_timeSinceLastChar >= _timePerChar)
                 {
-                    _text.text += " [Press " + _player.GetAttackKey() + "]";
-                    _readTextOut = false;
+                    if (CanDoNextChar())
+                    {
+                        _charIndex++;
+                        _text.text += _dialog[_charIndex];
+                        _timeSinceLastChar = 0;
+                    }
+                    else
+                    {
+                        if (CanDoMoreDialog())
+                        {
+                            _text.text += " [Press " + _player.GetAttackKey() + "]";
+                        }
+                        _readTextOut = false;
+                    }
                 }
             }
-        }
-        else if (!_readTextOut)
-        {
-            //listen for input
-            if (Input.GetKey(_player.GetAttackKey()))
+            else if (!_readTextOut)
             {
-                DoNextDialog();
+                //listen for input
+                if (Input.GetKey(_player.GetAttackKey()))
+                {
+                    DoNextDialog();
+                    _delaySoFar = 0;
+                }
             }
         }
     }
@@ -83,7 +109,7 @@ public class Coach : MonoBehaviour
         return _dialog.Length > 0 && _charIndex + 1 < _dialog.Length;
     }
 
-    bool CanDoMoreDialog()
+    public bool CanDoMoreDialog()
     {
         return _dialogStack.Length > 0 && _dialogIndex + 1 < _dialogStack.Length;
     }
